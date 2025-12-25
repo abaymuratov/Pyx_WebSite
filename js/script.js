@@ -268,8 +268,8 @@ class SmoothScroll {
 
     // Настройки по умолчанию + твои (можешь переопределять)
     this.options = {
-      lerp: 0.08,            // "вязкость": 0.06–0.12 обычно топ
-      wheelMultiplier: 1.1,  // "скорость" колеса: 0.8–1.5
+      lerp: 0.05,            // "вязкость": 0.06–0.12 обычно топ
+      wheelMultiplier: 0.9,  // "скорость" колеса: 0.8–1.5
       smoothWheel: true,
       smoothTouch: false,    // на мобилках чаще лучше натив
       ...options,
@@ -341,7 +341,7 @@ class SmoothScroll {
 
     this.lenis?.scrollTo(target, {
       offset,
-      duration: 2, // скорость прокрутки к якорю (сек)
+      duration: 3, // скорость прокрутки к якорю (сек)
       easing: (t) => 1 - Math.pow(1 - t, 3), // мягкий easeOutCubic
       // immediate: false,
       // lock: false,
@@ -581,5 +581,6 @@ class SmoothScroll {
   } else {
     init();
   }
+
 
 })();
