@@ -742,7 +742,7 @@ a {
   white-space: nowrap;
   will-change: transform;
   padding: 0 var(--gutter);
-  animation: slide-partners 30s linear infinite;
+  animation: slide-partners 15s linear infinite;
 }
 
 .partner {
@@ -1325,4 +1325,5 @@ a {
   .partners-track {
     animation-duration: 20s;
   }
+
 }
