@@ -126,7 +126,7 @@
 
     animate(headingWords, allParagraphWords) {
       let delay = 0;
-      const step = 50;
+      const step = 25;
 
       // Анимация заголовка
       headingWords.forEach(word => {
@@ -262,33 +262,118 @@ class ProjectTabs {
   // SMOOTH SCROLL FOR ANCHOR LINKS
   // ============================================
   
-  function initSmoothScroll() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function(e) {
-        const href = this.getAttribute('href');
-        
-        // Игнорируем пустые якоря
-        if (href === '#' || href === '#!') {
-          e.preventDefault();
-          return;
-        }
+class SmoothScroll {
+  constructor(options = {}) {
+    this.lenis = null;
 
-        const target = document.querySelector(href);
-        
-        if (target) {
-          e.preventDefault();
-          
-          const headerHeight = document.querySelector('.site-header')?.offsetHeight || 0;
-          const targetPosition = target.offsetTop - headerHeight;
-          
-          window.scrollTo({
-            top: targetPosition,
-            behavior: 'smooth'
-          });
-        }
-      });
+    // Настройки по умолчанию + твои (можешь переопределять)
+    this.options = {
+      lerp: 0.08,            // "вязкость": 0.06–0.12 обычно топ
+      wheelMultiplier: 1.1,  // "скорость" колеса: 0.8–1.5
+      smoothWheel: true,
+      smoothTouch: false,    // на мобилках чаще лучше натив
+      ...options,
+    };
+
+    this._rafId = null;
+
+    // bind
+    this.raf = this.raf.bind(this);
+    this.onAnchorClick = this.onAnchorClick.bind(this);
+    this.onResize = this.onResize.bind(this);
+  }
+
+  init() {
+    // если уже был запущен — корректно переинициализируем
+    if (this.lenis) this.destroy();
+
+    if (typeof Lenis === "undefined") {
+      console.error("[SmoothScroll] Lenis is not loaded. Check script include.");
+      return;
+    }
+
+    this.lenis = new Lenis(this.options);
+
+    // RAF loop
+    this._rafId = requestAnimationFrame(this.raf);
+
+    // events
+    document.addEventListener("click", this.onAnchorClick);
+    window.addEventListener("resize", this.onResize, { passive: true });
+
+    // (опционально) если у тебя есть элементы, которые меняют высоту после загрузки (картинки)
+    // можно дернуть resize чуть позже:
+    setTimeout(() => this.lenis?.resize(), 0);
+  }
+
+  raf(time) {
+    this.lenis?.raf(time);
+    this._rafId = requestAnimationFrame(this.raf);
+  }
+
+  onResize() {
+    // Lenis пересчитает размеры
+    this.lenis?.resize();
+  }
+
+  onAnchorClick(e) {
+    const link = e.target.closest('a[href^="#"]');
+    if (!link) return;
+
+    const href = link.getAttribute("href");
+    if (!href || href === "#" || href === "#!") return;
+
+    // Если это не валидный селектор или нет элемента — выходим
+    let target = null;
+    try {
+      target = document.querySelector(href);
+    } catch {
+      return;
+    }
+    if (!target) return;
+
+    e.preventDefault();
+    history.pushState(null, "", href);
+
+    // offset под фиксированный header
+    const header = document.querySelector(".site-header");
+    const offset = header ? -header.offsetHeight : 0;
+
+    this.lenis?.scrollTo(target, {
+      offset,
+      duration: 2, // скорость прокрутки к якорю (сек)
+      easing: (t) => 1 - Math.pow(1 - t, 3), // мягкий easeOutCubic
+      // immediate: false,
+      // lock: false,
     });
   }
+
+  // Менять "вязкость" и скорость на лету
+  setFeel({ lerp, wheelMultiplier } = {}) {
+    if (!this.lenis) return;
+    if (typeof lerp === "number") this.lenis.options.lerp = lerp;
+    if (typeof wheelMultiplier === "number") this.lenis.options.wheelMultiplier = wheelMultiplier;
+  }
+
+  // Удобный метод, если нужен ручной скролл к элементу
+  scrollTo(target, opts = {}) {
+    if (!this.lenis) return;
+    this.lenis.scrollTo(target, opts);
+  }
+
+  destroy() {
+    document.removeEventListener("click", this.onAnchorClick);
+    window.removeEventListener("resize", this.onResize);
+
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+
+    this.lenis?.destroy();
+    this.lenis = null;
+  }
+}
 
   // ============================================
   // PARTNERS CAROUSEL - Infinite scroll fix
@@ -454,7 +539,11 @@ class ProjectTabs {
     updateFooterYear();
     
     // Плавный скролл
-    initSmoothScroll();
+    const smoothScroll = new SmoothScroll({
+      lerp: 0.05,
+      wheelMultiplier: 0.7,
+    });
+    smoothScroll.init();
     
     // Карусель партнёров
     const partnersCarousel = new PartnersCarousel();

@@ -16,7 +16,7 @@
   --fs-h1: clamp(2.5rem, 5vw, 4.5rem);
   --fs-h2: clamp(2rem, 4vw, 3.5rem);
   --fs-h3: clamp(1.5rem, 3vw, 2.5rem);
-  --fs-body: clamp(1rem, 1.5vw, 1.125rem);
+  --fs-body: clamp(0.4rem, 1.28vw, 2.4rem);
   --fs-small: clamp(0.875rem, 1.2vw, 1rem);
 
   /* Layout */
@@ -59,7 +59,7 @@
 
 html,
 body {
-  height: 100%;
+  height: auto;
   max-width: 100%;
   overflow-x: hidden;
 }
@@ -560,6 +560,7 @@ a {
   overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
   transition: transform var(--transition-medium);
+  grid-column: 1 / -1;
 }
 
 .project-big:hover {
@@ -617,7 +618,7 @@ a {
 }
 
 .projects-right {
-  display: flex;
+  display: grid;
   min-width: 0;
 }
 
